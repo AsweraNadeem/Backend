@@ -15,6 +15,7 @@ connectDB();
 
 const app = express();
 
+// Enable CORS for all origins (Standard for initial deployment)
 app.use(cors());
 app.use(express.json());
 
@@ -23,9 +24,9 @@ app.use("/auth", authRoute);
 app.use("/employee", employeRoute);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// Health check route (Prevents 404 on the home page)
+// Root route to prevent 404
 app.get("/", (req, res) => {
-    res.send("Employee Management Server is running...");
+    res.send("Employee Management Server is running successfully!");
 });
 
 // ONLY run app.listen if NOT on Vercel
