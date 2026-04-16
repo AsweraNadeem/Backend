@@ -1,55 +1,51 @@
-const Employee = require('../modals/Employee'); // Ensure this matches your folder: models vs modals
-const fs = require('fs');
-const path = require('path');
+const Employee = require('../modals/Employee'); // Ensure folder name is correct (models vs modals)
+
+// Helper: Convert buffer to Base64 string for Vercel compatibility
+const getBase64Image = (file) => {
+    return `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+};
 
 exports.addEmployee = async (req, res) => {
     try {
         const { name, email, mobile, designation, gender, course } = req.body;
-        const image = req.file?.path || "";
+        
+        // 1. Check if image exists in memory buffer
+        if (!req.file) {
+            return res.status(400).json({ message: "Image is required", success: false });
+        }
 
-        // Dynamic import for nanoid to prevent ERR_REQUIRE_ESM on Vercel
+        const imageData = getBase64Image(req.file);
+
+        // 2. Dynamic import for nanoid
         const { nanoid } = await import('nanoid');
 
-        // Check required fields
-        if (!name || !email || !mobile || !designation || !gender || !course || !image) {
-            return res.status(400).json({
-                message: "All fields (name, email, mobile, designation, gender, course, image) are required"
-            });
+        // 3. Validation Logic
+        if (!name || !email || !mobile || !designation || !gender || !course) {
+            return res.status(400).json({ message: "All text fields are required", success: false });
         }
 
-        // Name validation
         if (name.trim().length < 3) {
-            return res.status(400).json({
-                message: "Name must be at least 3 characters long"
-            });
+            return res.status(400).json({ message: "Name must be at least 3 characters", success: false });
         }
 
-        // Email validation
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            return res.status(400).json({
-                message: "Invalid email format"
-            });
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            return res.status(400).json({ message: "Invalid email format", success: false });
         }
 
-        // Mobile validation (10-digit numeric)
         if (!/^\d{10}$/.test(mobile)) {
-            return res.status(400).json({
-                message: "Mobile number must be 10 digits"
+            return res.status(400).json({ message: "Mobile number must be 10 digits", success: false });
+        }
+
+        // 4. Duplicate Checks
+        const existingEmployee = await Employee.findOne({ $or: [{ email }, { mobile }] });
+        if (existingEmployee) {
+            return res.status(400).json({ 
+                message: existingEmployee.email === email ? "Email already exists" : "Mobile number already exists", 
+                success: false 
             });
         }
 
-        // Check duplicates
-        const existingEmail = await Employee.findOne({ email });
-        if (existingEmail) {
-            return res.status(400).json({ message: "Email already exists" });
-        }
-        
-        const existingMobile = await Employee.findOne({ mobile });
-        if (existingMobile) {
-            return res.status(400).json({ message: "Mobile number already exists" });
-        }
-
+        // 5. Create Record
         await Employee.create({
             id: nanoid(8),
             name,
@@ -58,21 +54,15 @@ exports.addEmployee = async (req, res) => {
             designation,
             gender,
             course,
-            image: image || "",
+            image: imageData,
             user: req.user._id
         });
 
-        res.status(201).json({
-            message: "Employee Added successfully",
-            success: true
-        });
+        res.status(201).json({ message: "Employee Added successfully", success: true });
 
     } catch (error) {
-        res.status(400).json({
-            message: "Failed to add New Employee",
-            error: error.message,
-            success: false
-        });
+        console.error("Add Error:", error);
+        res.status(500).json({ message: "Failed to add New Employee", error: error.message, success: false });
     }
 };
 
@@ -81,95 +71,60 @@ exports.updateEmployee = async (req, res) => {
         const { name, email, mobile, designation, gender, course } = req.body;
         const empId = req.params.id || req.query.id;
 
-        if (!empId) {
-            return res.status(400).json({ message: "Employee ID is required" });
-        }
-
         const employee = await Employee.findById(empId);
-        if (!employee) {
-            return res.status(404).json({ message: "Employee not found" });
+        if (!employee) return res.status(404).json({ message: "Employee not found", success: false });
+
+        // Update image only if a new file is uploaded
+        let image = employee.image;
+        if (req.file) {
+            image = getBase64Image(req.file);
         }
 
-        const image = req.file?.path || employee.image;
-
-        // Validation logic for updates
-        if (email) {
-            const existingEmail = await Employee.findOne({ email, _id: { $ne: empId } });
-            if (existingEmail) return res.status(400).json({ message: "Email already exists" });
+        // Validation for email uniqueness (excluding self)
+        if (email && email !== employee.email) {
+            const emailExists = await Employee.findOne({ email, _id: { $ne: empId } });
+            if (emailExists) return res.status(400).json({ message: "Email already exists", success: false });
         }
 
-        // Handle old image deletion (Note: This may not work on Vercel's temporary filesystem)
-        if (req.file && employee.image) {
-            const imagePath = path.join(__dirname, '../', employee.image);
-            if (fs.existsSync(imagePath)) {
-                fs.unlinkSync(imagePath);
-            }
-        }
+        // NOTE: fs.unlinkSync removed - Vercel is stateless/read-only
+        await Employee.findByIdAndUpdate(empId, { 
+            name, email, mobile, designation, gender, course, image 
+        }, { new: true });
 
-        await Employee.findByIdAndUpdate(empId, { name, email, mobile, designation, gender, course, image });
-
-        res.status(200).json({
-            message: "Employee data updated successfully",
-            success: true
-        });
+        res.status(200).json({ message: "Employee updated successfully", success: true });
 
     } catch (error) {
-        res.status(400).json({
-            message: "Failed to update employee data",
-            error: error.message,
-            success: false
-        });
+        res.status(500).json({ message: "Failed to update employee", error: error.message, success: false });
     }
 };
 
 exports.getAllEmployee = async (req, res) => {
     try {
-        const employees = await Employee.find();
-        res.status(200).json({
-            message: "Employee fetched successfully",
-            employees: employees
-        });
+        const employees = await Employee.find().sort({ createdAt: -1 });
+        res.status(200).json({ message: "Fetched successfully", employees, success: true });
     } catch (error) {
-        res.status(400).json({ message: "failed to fetch employee", error: error.message });
+        res.status(500).json({ message: "Failed to fetch employees", error: error.message, success: false });
     }
 };
 
 exports.getEmployeeById = async (req, res) => {
     try {
-        const empId = req.params.id || req.query.id;
-        if (!empId) {
-            return res.status(400).json({ message: "employee Id is required", success: false });
-        }
-        const employee = await Employee.findById(empId);
-        res.status(200).json({
-            message: "Employee details fetched successfully",
-            employee,
-            success: true
-        });
+        const employee = await Employee.findById(req.params.id);
+        if (!employee) return res.status(404).json({ message: "Employee not found", success: false });
+        res.status(200).json({ employee, success: true });
     } catch (error) {
-        res.status(400).json({ message: "Failed to find employee", error: error.message, success: false });
+        res.status(500).json({ message: "Error finding employee", error: error.message, success: false });
     }
 };
 
 exports.deleteEmployee = async (req, res) => {
     try {
-        const empId = req.params.id || req.query.id;
-        const employee = await Employee.findById(empId);
+        const deleted = await Employee.findByIdAndDelete(req.params.id);
+        if (!deleted) return res.status(404).json({ message: "Employee not found", success: false });
         
-        if (!employee) {
-            return res.status(404).json({ message: "Employee not found" });
-        }
-
-        if (employee.image) {
-            const imagePath = path.join(__dirname, '../', employee.image);
-            if (fs.existsSync(imagePath)) {
-                fs.unlinkSync(imagePath);
-            }
-        }
-
-        await Employee.findByIdAndDelete(empId);
+        // NOTE: fs.unlinkSync removed - no local files to delete
         res.status(200).json({ message: "Employee deleted successfully", success: true });
     } catch (error) {
-        res.status(400).json({ message: "Employee deletion failed", error: error.message, success: false });
+        res.status(500).json({ message: "Deletion failed", error: error.message, success: false });
     }
 };
