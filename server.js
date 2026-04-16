@@ -1,41 +1,57 @@
 const path = require("path");
 const dotenv = require("dotenv");
-
-// Load .env
-dotenv.config({ path: path.resolve(__dirname, ".env") });
-
 const express = require("express");
 const cors = require("cors");
 const connectDB = require("./config/db");
-const authRoute = require('./routes/authRoutes');
-const employeRoute = require('./routes/employeRoutes');
 
-// Initialize DB
+// 1. Load Environment Variables
+dotenv.config();
+
+// 2. Initialize Database
 connectDB();
 
 const app = express();
 
-// Enable CORS for all origins (Standard for initial deployment)
-app.use(cors());
+// 3. Optimized CORS Configuration
+// This allows your specific Vercel frontend to communicate with this backend
+app.use(cors({
+    origin: "https://frontend-c716.vercel.app", 
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
 app.use(express.json());
 
-// Routes
+// 4. Import Routes
+const authRoute = require('./routes/authRoutes');
+const employeRoute = require('./routes/employeRoutes');
+const leaveRoute = require('./routes/leaveRoutes');
+const attendanceRoute = require('./routes/attendanceRoutes');
+const performanceRoute = require('./routes/performanceRoutes');
+const payrollRoute = require('./routes/payrollRoutes');
+
+// 5. Define Routes
 app.use("/auth", authRoute);
 app.use("/employee", employeRoute);
+app.use("/leave", leaveRoute);
+app.use("/attendance", attendanceRoute);
+app.use("/performance", performanceRoute);
+app.use("/payroll", payrollRoute);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// Root route to prevent 404
+// 6. Root Route (Useful for health checks)
 app.get("/", (req, res) => {
     res.send("Employee Management Server is running successfully!");
 });
 
-// ONLY run app.listen if NOT on Vercel
+// 7. Vercel Execution Logic
+// On Vercel, we export the app. Locally, we start the server.
 if (process.env.NODE_ENV !== 'production') {
     const PORT = process.env.PORT || 5000;
     app.listen(PORT, () => {
-        console.log(`🚀 Server running on port ${PORT}`);
+        console.log(`🚀 Server running locally on port ${PORT}`);
     });
 }
 
-// REQUIRED for Vercel
 module.exports = app;
