@@ -1,14 +1,16 @@
-const User = require("../modals/User");
+const User = require("../modals/User"); // Check if folder is 'modals' or 'models'
 const jwt = require("jsonwebtoken");
 const bcrypt = require('bcryptjs');
 
-// Use environment variable, with the hardcoded key as a safety fallback
-const JWT_SECRET_KEY = process.env.JWT_SECRET || "3b776744c61c801cd7d5e28a84d0e83bee527c35885750184c2a45ebd519f1d6";
+// 1. Move the secret logic here to ensure it always has a value
+const getSecret = () => {
+    return process.env.JWT_SECRET || "3b776744c61c801cd7d5e28a84d0e83bee527c35885750184c2a45ebd519f1d6";
+};
 
 const generateToken = (id) => {
     return jwt.sign(
         { id },
-        JWT_SECRET_KEY, 
+        getSecret(), // 2. Always calls the fresh secret
         { expiresIn: "24h" }
     );
 };
@@ -60,6 +62,8 @@ exports.loginUser = async (req, res) => {
         });
 
     } catch (error) {
+        // Logging the full error to Vercel logs for you to see
+        console.error("Login Crash:", error);
         return res.status(500).json({
             message: "Login error",
             error: error.message
