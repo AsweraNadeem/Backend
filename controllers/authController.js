@@ -2,8 +2,8 @@ const User = require("../modals/User");
 const jwt = require("jsonwebtoken");
 const bcrypt = require('bcryptjs');
 
-// Hardcoded secret to ensure Vercel never crashes on login/register
-const JWT_SECRET_KEY = "3b776744c61c801cd7d5e28a84d0e83bee527c35885750184c2a45ebd519f1d6";
+// Use environment variable, with the hardcoded key as a safety fallback
+const JWT_SECRET_KEY = process.env.JWT_SECRET || "3b776744c61c801cd7d5e28a84d0e83bee527c35885750184c2a45ebd519f1d6";
 
 const generateToken = (id) => {
     return jwt.sign(
