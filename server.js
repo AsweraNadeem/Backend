@@ -1,15 +1,14 @@
 const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
-const path = require("path");
 
-// 1. LOAD DOTENV BEFORE ANYTHING ELSE
-// This ensures process.env.JWT_SECRET is available to your routes/controllers
+// 1. LOAD DOTENV FIRST
+// Ensures all process.env variables (JWT_SECRET, MONGO_URI) are ready
 dotenv.config(); 
 
 const connectDB = require("./config/db");
 
-// 2. IMPORT ROUTES AFTER DOTENV
+// 2. IMPORT ALL ROUTES
 const authRoute = require('./routes/authRoutes');
 const employeRoute = require('./routes/employeRoutes');
 const leaveRoute = require('./routes/leaveRoutes');
@@ -24,34 +23,31 @@ const app = express();
 
 // 3. MIDDLEWARE
 app.use(cors({
-    origin: "https://frontend-c716.vercel.app",
+    origin: ["https://frontend-c716.vercel.app", "http://localhost:3000"],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true
 }));
 
-app.use(express.json());
+// Increased limit to 10mb to handle Base64 image strings without 413 errors
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// 4. ROUTES
+// 4. ROUTE MOUNTING
 app.use("/auth", authRoute);
 app.use("/employee", employeRoute);
-<<<<<<< Updated upstream
-
-// Serving static files (Note: Vercel does not persist files in /uploads)
-=======
 app.use("/leave", leaveRoute);
 app.use("/attendance", attendanceRoute);
 app.use("/performance", performanceRoute);
 app.use("/payroll", payrollRoute);
->>>>>>> Stashed changes
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-app.get("/", (req, res) => res.send("API is running..."));
+// Health Check
+app.get("/", (req, res) => res.send("HRM System API is running..."));
 
-// 5. VERCEL & LOCAL SERVER LOGIC
+// 5. SERVER LOGIC
 if (process.env.NODE_ENV !== 'production') {
     const PORT = process.env.PORT || 5000;
     app.listen(PORT, () => console.log(`🚀 Local Server running on port ${PORT}`));
 }
 
-// CRITICAL: Vercel needs the app exported to handle the serverless function
+// CRITICAL for Vercel deployment
 module.exports = app;
