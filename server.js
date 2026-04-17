@@ -12,6 +12,10 @@ const connectDB = require("./config/db");
 // 2. IMPORT ROUTES AFTER DOTENV
 const authRoute = require('./routes/authRoutes');
 const employeRoute = require('./routes/employeRoutes');
+const leaveRoute = require('./routes/leaveRoutes');
+const attendanceRoute = require('./routes/attendanceRoutes');
+const performanceRoute = require('./routes/performanceRoutes');
+const payrollRoute = require('./routes/payrollRoutes');
 
 // Initialize Database
 connectDB();
@@ -30,8 +34,15 @@ app.use(express.json());
 // 4. ROUTES
 app.use("/auth", authRoute);
 app.use("/employee", employeRoute);
+<<<<<<< Updated upstream
 
 // Serving static files (Note: Vercel does not persist files in /uploads)
+=======
+app.use("/leave", leaveRoute);
+app.use("/attendance", attendanceRoute);
+app.use("/performance", performanceRoute);
+app.use("/payroll", payrollRoute);
+>>>>>>> Stashed changes
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.get("/", (req, res) => res.send("API is running..."));
