@@ -1,7 +1,7 @@
-const Task = require("../models/Task");
+// Updated to "modals" to match your project structure
+const Task = require("../modals/Task"); 
 
 // Get all tasks
-// Note: You can add .populate("employeeId", "name email") if you want to see employee details
 exports.getAllTasks = async (req, res) => {
   try {
     const tasks = await Task.find().sort({ createdAt: -1 });
