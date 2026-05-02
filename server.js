@@ -3,7 +3,6 @@ const dotenv = require("dotenv");
 const cors = require("cors");
 
 // 1. LOAD DOTENV FIRST
-// Ensures all process.env variables (JWT_SECRET, MONGO_URI) are ready
 dotenv.config(); 
 
 const connectDB = require("./config/db");
@@ -15,6 +14,7 @@ const leaveRoute = require('./routes/leaveRoutes');
 const attendanceRoute = require('./routes/attendanceRoutes');
 const performanceRoute = require('./routes/performanceRoutes');
 const payrollRoute = require('./routes/payrollRoutes');
+const taskRoute = require('./routes/taskRoutes'); // 👈 ADDED TASK ROUTE
 
 // Initialize Database
 connectDB();
@@ -28,7 +28,6 @@ app.use(cors({
     credentials: true
 }));
 
-// Increased limit to 10mb to handle Base64 image strings without 413 errors
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
@@ -39,6 +38,7 @@ app.use("/leave", leaveRoute);
 app.use("/attendance", attendanceRoute);
 app.use("/performance", performanceRoute);
 app.use("/payroll", payrollRoute);
+app.use("/tasks", taskRoute); // 👈 MOUNTED TASK ROUTE
 
 // Health Check
 app.get("/", (req, res) => res.send("HRM System API is running..."));
