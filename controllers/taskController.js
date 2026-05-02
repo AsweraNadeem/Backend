@@ -21,21 +21,41 @@ exports.getEmployeeTasks = async (req, res) => {
   }
 };
 
-// Create a task
+// Create a task - UPDATED with new fields
 exports.createTask = async (req, res) => {
-  const { employeeId, title, description, deadline, priority, status } = req.body;
+  // 1. Pull all new fields from the request body
+  const { 
+    employeeId, 
+    title, 
+    description, 
+    date, 
+    startTime, 
+    duration, 
+    taskType, 
+    assignee, 
+    priority, 
+    status 
+  } = req.body;
+
   try {
+    // 2. Map them to the new Task instance
     const task = new Task({ 
       employeeId, 
       title, 
       description, 
-      deadline, 
+      date,          // Added
+      startTime,     // Added
+      duration,      // Added
+      taskType,      // Added
+      assignee,      // Added
       priority, 
       status 
     });
+
     await task.save();
     res.status(201).json(task);
   } catch (error) {
+    // This will now show you specifically if 'date' or 'startTime' is missing
     res.status(500).json({ message: error.message });
   }
 };
