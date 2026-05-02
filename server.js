@@ -14,7 +14,7 @@ const leaveRoute = require('./routes/leaveRoutes');
 const attendanceRoute = require('./routes/attendanceRoutes');
 const performanceRoute = require('./routes/performanceRoutes');
 const payrollRoute = require('./routes/payrollRoutes');
-const taskRoute = require('./routes/taskRoutes'); // 👈 ADDED TASK ROUTE
+const taskRoute = require('./routes/taskRoutes'); // 👈 Import added here
 
 // Initialize Database
 connectDB();
@@ -28,6 +28,7 @@ app.use(cors({
     credentials: true
 }));
 
+// Increased limit for Base64 image strings
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
@@ -38,7 +39,7 @@ app.use("/leave", leaveRoute);
 app.use("/attendance", attendanceRoute);
 app.use("/performance", performanceRoute);
 app.use("/payroll", payrollRoute);
-app.use("/tasks", taskRoute); // 👈 MOUNTED TASK ROUTE
+app.use("/tasks", taskRoute); // 👈 Mounting added here
 
 // Health Check
 app.get("/", (req, res) => res.send("HRM System API is running..."));
