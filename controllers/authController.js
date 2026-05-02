@@ -1,4 +1,4 @@
-const User = require("../modals/User"); // Check if folder is 'modals' or 'models'
+const User = require("../modals/User"); // Matches your 'modals' folder naming
 const jwt = require("jsonwebtoken");
 const bcrypt = require('bcryptjs');
 
@@ -33,6 +33,7 @@ exports.registerUser = async (req, res) => {
 
         res.status(201).json({
             _id: user.id,
+            userId: user.id, // Explicitly sending for frontend clarity
             email: user.email,
         });
     } catch (err) {
@@ -57,12 +58,12 @@ exports.loginUser = async (req, res) => {
 
         return res.json({
             _id: existingUser.id,
+            userId: existingUser.id, // Added this for Task Management requirement
             email: existingUser.email,
             token: generateToken(existingUser.id),
         });
 
     } catch (error) {
-        // Logging the full error to Vercel logs for you to see
         console.error("Login Crash:", error);
         return res.status(500).json({
             message: "Login error",
