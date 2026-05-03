@@ -15,7 +15,8 @@ const attendanceRoute = require('./routes/attendanceRoutes');
 const performanceRoute = require('./routes/performanceRoutes');
 const payrollRoute = require('./routes/payrollRoutes');
 const taskRoute = require('./routes/taskRoutes');
-const loanRoute = require('./routes/loanRoutes'); // 👈 Loan Route Added
+const loanRoute = require('./routes/loanRoutes'); 
+const assetRoute = require('./routes/assetRoutes'); // 👈 Asset Route Added
 
 // Initialize Database
 connectDB();
@@ -41,7 +42,8 @@ app.use("/attendance", attendanceRoute);
 app.use("/performance", performanceRoute);
 app.use("/payroll", payrollRoute);
 app.use("/tasks", taskRoute);
-app.use("/loans", loanRoute); // 👈 Loan Mounting Added
+app.use("/loans", loanRoute);
+app.use("/assets", assetRoute); // 👈 Asset Mounting Added
 
 // Health Check
 app.get("/", (req, res) => res.send("HRM System API is running..."));
