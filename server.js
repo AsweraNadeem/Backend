@@ -14,7 +14,8 @@ const leaveRoute = require('./routes/leaveRoutes');
 const attendanceRoute = require('./routes/attendanceRoutes');
 const performanceRoute = require('./routes/performanceRoutes');
 const payrollRoute = require('./routes/payrollRoutes');
-const taskRoute = require('./routes/taskRoutes'); // 👈 Import added here
+const taskRoute = require('./routes/taskRoutes');
+const loanRoute = require('./routes/loanRoutes'); // 👈 Loan Route Added
 
 // Initialize Database
 connectDB();
@@ -39,12 +40,23 @@ app.use("/leave", leaveRoute);
 app.use("/attendance", attendanceRoute);
 app.use("/performance", performanceRoute);
 app.use("/payroll", payrollRoute);
-app.use("/tasks", taskRoute); // 👈 Mounting added here
+app.use("/tasks", taskRoute);
+app.use("/loans", loanRoute); // 👈 Loan Mounting Added
 
 // Health Check
 app.get("/", (req, res) => res.send("HRM System API is running..."));
 
-// 5. SERVER LOGIC
+// 5. GLOBAL ERROR HANDLER
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ 
+        success: false, 
+        message: "Internal Server Error", 
+        error: err.message 
+    });
+});
+
+// 6. SERVER LOGIC
 if (process.env.NODE_ENV !== 'production') {
     const PORT = process.env.PORT || 5000;
     app.listen(PORT, () => console.log(`🚀 Local Server running on port ${PORT}`));
