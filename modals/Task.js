@@ -16,17 +16,17 @@ const taskSchema = new mongoose.Schema({
     type: String, 
     required: true 
   },
-  // --- NEW FIELDS START HERE ---
+  // --- UPDATED FIELDS: Optional to prevent 500 errors ---
   date: { 
-    type: String, // Calendar date (stored as string "YYYY-MM-DD" from frontend)
-    required: true 
+    type: String, 
+    required: false // Changed to false to prevent validation crashes
   },
   startTime: { 
-    type: String, // Time (e.g., "14:30")
-    required: true 
+    type: String, 
+    required: false // Changed to false to prevent validation crashes
   },
   duration: { 
-    type: String, // How much time to complete (e.g., "2h 30m")
+    type: String, 
     default: "0h"
   },
   taskType: { 
@@ -35,13 +35,13 @@ const taskSchema = new mongoose.Schema({
     enum: ["Development", "Design", "Meeting", "Testing", "Support", "Other"]
   },
   assignee: { 
-    type: String, // Name of the person assigned to the task
+    type: String, 
     trim: true 
   },
   attachment: {
-    type: String // URL or path to a file (optional)
+    type: String 
   },
-  // --- NEW FIELDS END HERE ---
+  // --- END UPDATED FIELDS ---
   priority: { 
     type: String, 
     required: true, 
