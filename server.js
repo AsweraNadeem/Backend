@@ -17,24 +17,27 @@ const payrollRoute = require('./routes/payrollRoutes');
 const taskRoute = require('./routes/taskRoutes');
 const loanRoute = require('./routes/loanRoutes');
 const assetRoute = require('./routes/assetRoutes');
-const announcementRoute = require('./routes/announcementRoutes'); // 👈 Announcement Route Added
+const announcementRoute = require('./routes/announcementRoutes');
 
 // Initialize Database Connection
 connectDB();
 
 const app = express();
 
-// 3. MIDDLEWARE CONFIGURATION
+// 3. IMPROVED MIDDLEWARE CONFIGURATION
 app.use(cors({
     origin: ["https://frontend-c716.vercel.app", "http://localhost:3000"],
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // 👈 Added OPTIONS
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"] // 👈 Explicitly allowed headers
 }));
 
 /** 
- * Best Practice: Limit body size for Base64 image strings 
- * used in profile pictures or asset documentation.
+ * Handle Preflight requests globally
+ * This is a best practice for Vercel/Node deployments to stop CORS errors
  */
+app.options("*", cors()); 
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
@@ -48,7 +51,7 @@ app.use("/payroll", payrollRoute);
 app.use("/tasks", taskRoute);
 app.use("/loans", loanRoute);
 app.use("/assets", assetRoute);
-app.use("/announcements", announcementRoute); // 👈 Announcement Mounting Added
+app.use("/announcements", announcementRoute);
 
 // Base Health Check
 app.get("/", (req, res) => res.send("HRM System API is running..."));
@@ -64,10 +67,6 @@ app.use((err, req, res, next) => {
 });
 
 // 6. SERVER INITIALIZATION
-/**
- * For Vercel deployments, we export the app. 
- * For local development, we start the listener.
- */
 if (process.env.NODE_ENV !== 'production') {
     const PORT = process.env.PORT || 5000;
     app.listen(PORT, () => console.log(`🚀 Local Server running on port ${PORT}`));
